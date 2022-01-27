@@ -35,7 +35,7 @@ CTrade Trade;
 
 bool AllowedLong = true;
 bool AllowedShort = true;
-double LotsSize = 0.5;
+double LotsSize = 0.1; //placer value
 
 
 void OnTick()
@@ -116,9 +116,7 @@ void OnTick()
    }
    }
   
-  //Comment(AllowedShort);
-  
-
+ 
    
     //                             Pre Execution Conditioner
    //============================================================================
@@ -145,12 +143,14 @@ void OnTick()
    //For Risk Management
    double StoplossInPips = TakeProfit;
    TakeProfit = Latest_Price.ask + TakeProfit;
+   
+   
    //Risk Management
-   //double Equity = AccountInfoDouble(ACCOUNT_EQUITY);
-   //double LotSize = (0.01*Equity)/(StoplossInPips*SYMBOL_TRADE_TICK_SIZE);
-   
-   //Comment(StoplossInPips*SymbolInfoDouble);  
-   
+   double Bid=NormalizeDouble(SymbolInfoDouble(_Symbol ,SYMBOL_BID),_Digits);
+   double Stoploss=NormalizeDouble(SARValue*10000,_Digits);
+   double Equity=AccountInfoDouble(ACCOUNT_EQUITY);
+   double Risk=NormalizeDouble(0.02,2);
+   double LotSize= NormalizeDouble(Equity*Risk/Stoploss,2);
    
    Trade.Buy(LotsSize,NULL,0,SARValue,TakeProfit,NULL);                                                
    AllowedLong = false;
@@ -168,9 +168,11 @@ void OnTick()
    TakeProfit = Latest_Price.bid + TakeProfit;
    
    //Risk Management
-   //double Equity = AccountInfoDouble(ACCOUNT_EQUITY);
-   //double TickValue = MarketInfo(_Symbol, MODE_TICKVALUE);
-
+   double Bid=NormalizeDouble(SymbolInfoDouble(_Symbol ,SYMBOL_BID),_Digits);
+   double Stoploss=NormalizeDouble(SARValue*10000,_Digits);
+   double Equity=AccountInfoDouble(ACCOUNT_EQUITY);
+   double Risk=NormalizeDouble(0.02,2);
+   double LotSize= NormalizeDouble(Equity*Risk/Stoploss,2);
   
    Trade.Sell(LotsSize,NULL,0,SARValue,TakeProfit,NULL);                                                 
    AllowedShort = false;
@@ -179,15 +181,19 @@ void OnTick()
    }
    
    
+   
+   
 
    //      Display Text
    //==========================
    MessageBaord(MarketDirection,ConfirmedDirection,CheckEntry(),AllowedShort,AllowedLong);
    
-  
    
   }
 //+------------------------------------------------------------------+
+
+
+
 
 
 string MessageBaord(string text01,string text02,string text03,string text04,string text05){
@@ -224,5 +230,6 @@ string CheckEntry(){
    
    return Signal;
 }
+
 
 
