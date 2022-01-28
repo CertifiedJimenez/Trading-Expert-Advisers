@@ -35,13 +35,26 @@ CTrade Trade;
 
 bool AllowedLong = true;
 bool AllowedShort = true;
-double LotsSize = 0.1; //placer value
+double LotSize = 0;
+double pips = 0.00010;;
+
+input double RiskReward = 1;
 
 
 void OnTick()
   {
    MqlRates PriceInformation[];
    ArraySetAsSeries(PriceInformation,true);
+   
+   
+   double ticksize = SymbolInfoDouble(Symbol(), SYMBOL_TRADE_TICK_VALUE);
+   if (ticksize == 0.00001 || ticksize == 0.001){
+   pips=0.00010;
+   }
+   //else{
+   //pips = ticksize;
+   //}
+   
    
    
    //                            200 EMA Peroid
@@ -136,23 +149,26 @@ void OnTick()
    if (PostionsForThisPair == 0){
    if(MarketDirection == "Bullish" && ConfirmedDirection == true && CheckEntry() == "Buy" && AllowedLong==true){
 
-   //Take Profit Calculation
+   //Take Profit Calculations
    MqlTick Latest_Price; 
    SymbolInfoTick(Symbol() ,Latest_Price); 
    double TakeProfit = Latest_Price.bid - SARValue;
-   //For Risk Management
-   double StoplossInPips = TakeProfit;
-   TakeProfit = Latest_Price.ask + TakeProfit;
    
    
+
    //Risk Management
-   double Bid=NormalizeDouble(SymbolInfoDouble(_Symbol ,SYMBOL_BID),_Digits);
-   double Stoploss=NormalizeDouble(SARValue*10000,_Digits);
-   double Equity=AccountInfoDouble(ACCOUNT_EQUITY);
-   double Risk=NormalizeDouble(0.02,2);
-   double LotSize= NormalizeDouble(Equity*Risk/Stoploss,2);
+   double StoplossInPips = Latest_Price.ask-SARValue;
+   TakeProfit = Latest_Price.ask + TakeProfit*RiskReward;
+   StoplossInPips = DoubleToString(StoplossInPips,5);
+   StoplossInPips = StringToDouble(StoplossInPips);
+   double Equity = AccountInfoDouble(ACCOUNT_BALANCE);
+   double RiskedAmount = Equity*0.01;
+   double LotSize = (RiskedAmount/(StoplossInPips/pips))/10;
+   LotSize = DoubleToString(LotSize,2);
+   LotSize = StringToDouble(LotSize);
+   Print(LotSize," ",StoplossInPips, " ",pips," ",RiskedAmount," ",SARValue);
    
-   Trade.Buy(LotsSize,NULL,0,SARValue,TakeProfit,NULL);                                                
+   Trade.Buy(LotSize,NULL,0,SARValue,TakeProfit,NULL);                                                
    AllowedLong = false;
    
     
@@ -162,19 +178,22 @@ void OnTick()
    //Take Profit Calculation
    MqlTick Latest_Price; 
    SymbolInfoTick(Symbol() ,Latest_Price); 
-   double TakeProfit = Latest_Price.ask - SARValue;
-   //For Risk Management
-   double StoplossInPips = TakeProfit;
-   TakeProfit = Latest_Price.bid + TakeProfit;
+   double TakeProfit = Latest_Price.bid - SARValue;
    
    //Risk Management
-   double Bid=NormalizeDouble(SymbolInfoDouble(_Symbol ,SYMBOL_BID),_Digits);
-   double Stoploss=NormalizeDouble(SARValue*10000,_Digits);
-   double Equity=AccountInfoDouble(ACCOUNT_EQUITY);
-   double Risk=NormalizeDouble(0.02,2);
-   double LotSize= NormalizeDouble(Equity*Risk/Stoploss,2);
+   double StoplossInPips = SARValue - Latest_Price.bid;
+   TakeProfit = Latest_Price.bid + TakeProfit*RiskReward;
+   StoplossInPips = DoubleToString(StoplossInPips,5);
+   StoplossInPips = StringToDouble(StoplossInPips);
+   double Equity = AccountInfoDouble(ACCOUNT_BALANCE);
+   double RiskedAmount = Equity*0.01;
+   double LotSize = (RiskedAmount/(StoplossInPips/pips))/10;
+   LotSize = DoubleToString(LotSize,2);
+   LotSize = StringToDouble(LotSize);
+   Print(LotSize," ",StoplossInPips, " ",pips," ",RiskedAmount," ",SARValue);
+   
   
-   Trade.Sell(LotsSize,NULL,0,SARValue,TakeProfit,NULL);                                                 
+   Trade.Sell(LotSize,NULL,0,SARValue,TakeProfit,NULL);                                                 
    AllowedShort = false;
     
    }
