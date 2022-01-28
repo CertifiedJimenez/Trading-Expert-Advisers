@@ -38,8 +38,9 @@ bool AllowedShort = true;
 double LotSize = 0;
 double pips = 0.00010;;
 
-input double RiskReward = 1;
-
+input double RiskReward = 1; //Risk Reward
+input string StrategyMode = "Both"; //Short, Long, Both
+input int MovingAverageLength = 200; //Length for moving average
 
 void OnTick()
   {
@@ -63,9 +64,9 @@ void OnTick()
    
    
    //EMA Low
-   int Data = CopyRates(_Symbol,PERIOD_H1,0,3,PriceInformation);
+   int Data = CopyRates(_Symbol,PERIOD_CURRENT,0,3,PriceInformation);
    double MovingAverageArray[];
-   int MovingAverageDefinition = iDEMA(_Symbol,PERIOD_H1,200,0,PRICE_CLOSE);
+   int MovingAverageDefinition = iDEMA(_Symbol,PERIOD_CURRENT,MovingAverageLength,0,PRICE_CLOSE);
    ArraySetAsSeries(MovingAverageArray,true);
    CopyBuffer(MovingAverageDefinition,0,0,3,MovingAverageArray);
 
@@ -148,7 +149,7 @@ void OnTick()
    
    if (PostionsForThisPair == 0){
    if(MarketDirection == "Bullish" && ConfirmedDirection == true && CheckEntry() == "Buy" && AllowedLong==true){
-
+   if (StrategyMode == "Long" || StrategyMode == "Both"){
    //Take Profit Calculations
    MqlTick Latest_Price; 
    SymbolInfoTick(Symbol() ,Latest_Price); 
@@ -167,14 +168,15 @@ void OnTick()
    LotSize = DoubleToString(LotSize,2);
    LotSize = StringToDouble(LotSize);
    Print(LotSize," ",StoplossInPips, " ",pips," ",RiskedAmount," ",SARValue);
-   
+ 
    Trade.Buy(LotSize,NULL,0,SARValue,TakeProfit,NULL);                                                
    AllowedLong = false;
    
-    
    }
-   if(MarketDirection == "Bearish" && ConfirmedDirection == true && CheckEntry() == "Sell" && AllowedShort==true){
+   }
    
+   if(MarketDirection == "Bearish" && ConfirmedDirection == true && CheckEntry() == "Sell" && AllowedShort==true){
+   if (StrategyMode == "Long" || StrategyMode == "Both"){
    //Take Profit Calculation
    MqlTick Latest_Price; 
    SymbolInfoTick(Symbol() ,Latest_Price); 
@@ -195,7 +197,8 @@ void OnTick()
   
    Trade.Sell(LotSize,NULL,0,SARValue,TakeProfit,NULL);                                                 
    AllowedShort = false;
-    
+
+   }
    }
    }
    
@@ -226,7 +229,7 @@ string CheckEntry(){
    
    //MACD Histogram
    double PriceArray[];
-   double MacDHistogram = iMACD(_Symbol,PERIOD_H1,12,26,9,PRICE_CLOSE);
+   double MacDHistogram = iMACD(_Symbol,PERIOD_CURRENT,12,26,9,PRICE_CLOSE);
    ArraySetAsSeries(PriceArray,true);
    CopyBuffer(MacDHistogram,0,0,3,PriceArray);
    
